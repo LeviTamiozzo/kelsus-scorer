@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import type { MatchConfig, Player } from "@/types";
 import { useMatchState } from "@/hooks/useMatchState";
 import { useVoiceCommands } from "@/hooks/useVoiceCommands";
@@ -304,7 +304,57 @@ function WinnerScreen({
   );
 }
 
+function useAlarmSound() {
+  const ctxRef = useRef<AudioContext | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const start = useCallback(() => {
+    try {
+      const ctx = new AudioContext();
+      ctxRef.current = ctx;
+
+      function beep() {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.setValueAtTime(140, now + 0.25);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      }
+
+      beep();
+      intervalRef.current = setInterval(beep, 900);
+    } catch (_) { /* Audio not available */ }
+  }, []);
+
+  const stop = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    ctxRef.current?.close();
+    ctxRef.current = null;
+  }, []);
+
+  return { start, stop };
+}
+
 function RedCardScreen({ onDismiss }: { onDismiss: () => void }) {
+  const alarm = useAlarmSound();
+
+  useEffect(() => {
+    alarm.start();
+    return () => alarm.stop();
+  }, [alarm]);
+
+  const handleDismiss = useCallback(() => {
+    alarm.stop();
+    onDismiss();
+  }, [alarm, onDismiss]);
+
   return (
     <div className="fixed inset-0 z-[100] bg-red-600 flex flex-col items-center justify-center p-6 overflow-hidden animate-red-card-in">
       {/* Pulsing background overlay */}
@@ -345,7 +395,7 @@ function RedCardScreen({ onDismiss }: { onDismiss: () => void }) {
 
         {/* Dismiss button */}
         <button
-          onClick={onDismiss}
+          onClick={handleDismiss}
           className="mt-4 px-8 py-3 bg-white text-red-600 font-bold text-sm uppercase tracking-widest rounded-lg active:scale-95 transition-transform"
         >
           I&apos;ll Behave
