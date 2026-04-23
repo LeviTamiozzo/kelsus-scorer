@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import type { MatchConfig, Player } from "@/types";
 import { useMatchState } from "@/hooks/useMatchState";
+import { useVoiceCommands } from "@/hooks/useVoiceCommands";
 import { POINT_LABELS } from "@/types";
 
 export default function MatchBoard() {
@@ -27,8 +28,17 @@ export default function MatchBoard() {
     }
   }, [searchParams]);
 
-  const { state, addPoint, undoPoint } = useMatchState(config);
+  const { state, addPoint, undoPoint, setGameScore, winGame, setCurrentSetGames } = useMatchState(config);
   const { sets, currentSet, currentGame, isTiebreak, isSuperTiebreak, winner, server } = state;
+
+  const { isListening, isSupported, feedback, toggleListening } = useVoiceCommands({
+    config,
+    onWinGame: winGame,
+    onUndo: undoPoint,
+    onSetGameScore: setGameScore,
+    onSetCurrentSet: setCurrentSetGames,
+    active: winner === null,
+  });
 
   function getPointLabel(playerIdx: Player): string {
     if (isTiebreak || isSuperTiebreak) {
@@ -116,6 +126,15 @@ export default function MatchBoard() {
             isServing={currentServer === 1}
             position="bottom"
           />
+        </div>
+      )}
+
+      {/* Voice feedback toast */}
+      {feedback && (
+        <div className="fixed bottom-8 inset-x-0 flex justify-center pointer-events-none z-50">
+          <div className="bg-zinc-900 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg">
+            {feedback}
+          </div>
         </div>
       )}
     </main>
