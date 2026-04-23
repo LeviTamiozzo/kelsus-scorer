@@ -9,7 +9,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        mono: ["'Courier New'", "Courier", "monospace"],
+        sans: ["var(--font-victor-mono)", "monospace"],
+        mono: ["var(--font-victor-mono)", "monospace"],
       },
     },
   },

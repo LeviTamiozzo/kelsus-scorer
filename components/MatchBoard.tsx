@@ -62,20 +62,20 @@ export default function MatchBoard() {
   const currentServer = getCurrentServer();
 
   return (
-    <main className="min-h-screen bg-black flex flex-col select-none overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 shrink-0">
+    <main className="min-h-screen bg-white flex flex-col select-none overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-zinc-100">
         <button
           onClick={() => router.push("/")}
-          className="text-neutral-600 text-xs tracking-widest uppercase hover:text-white transition-colors"
+          className="text-zinc-400 text-xs tracking-widest uppercase hover:text-zinc-900 transition-colors"
         >
           ← Back
         </button>
-        <span className="text-neutral-700 text-xs tracking-widest uppercase">
+        <span className="text-zinc-300 text-xs tracking-widest uppercase">
           {isInTiebreak ? (isSuperTiebreak ? "Super TB" : "Tiebreak") : ""}
         </span>
         <button
           onClick={undoPoint}
-          className="text-neutral-600 text-xs tracking-widest uppercase hover:text-white transition-colors disabled:opacity-20"
+          className="text-zinc-400 text-xs tracking-widest uppercase hover:text-zinc-900 transition-colors disabled:opacity-25"
           disabled={state.history.length === 0}
         >
           Undo
@@ -103,7 +103,7 @@ export default function MatchBoard() {
             onScore={() => addPoint(0)}
             isServing={currentServer === 0}
           />
-          <div className="h-px landscape:w-px bg-neutral-900 shrink-0" />
+          <div className="h-px landscape:w-px bg-zinc-100 shrink-0" />
           <PlayerPanel
             name={config.player2Name}
             setsWon={p2Sets}
@@ -146,16 +146,16 @@ function PlayerPanel({
   return (
     <button
       onClick={onScore}
-      className="flex-1 flex flex-col justify-center px-8 landscape:px-14 py-6 bg-black cursor-pointer active:opacity-60 transition-opacity"
+      className="flex-1 flex flex-col justify-center px-8 landscape:px-14 py-6 bg-white cursor-pointer active:bg-zinc-50 transition-colors"
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
       {/* Name row */}
       <div className="flex items-center gap-3 mb-3">
         <span className={`text-xl leading-none ${isServing ? "visible" : "invisible"}`}>🎾</span>
-        <span className="text-2xl font-bold text-white tracking-tight truncate max-w-[200px] landscape:max-w-xs">
+        <span className="text-2xl font-bold text-zinc-900 tracking-tight truncate max-w-[200px] landscape:max-w-xs">
           {name}
         </span>
-        <span className="text-xl font-black text-neutral-600 ml-auto">{setsWon}</span>
+        <span className="text-xl font-bold text-zinc-300 ml-auto">{setsWon}</span>
       </div>
 
       {/* Past set scores */}
@@ -164,11 +164,11 @@ function PlayerPanel({
           {completedSets.map((set, i) => (
             <span
               key={i}
-              className={`text-base font-bold ${set.winner === playerSide ? "text-white" : "text-neutral-700"}`}
+              className={`text-base font-bold ${set.winner === playerSide ? "text-zinc-900" : "text-zinc-300"}`}
             >
               {set.games[playerSide]}
               {set.tiebreakPoints !== undefined && (
-                <sup className="text-xs text-neutral-600 ml-0.5">
+                <sup className="text-xs text-zinc-400 ml-0.5">
                   {set.tiebreakPoints[playerSide]}
                 </sup>
               )}
@@ -178,12 +178,12 @@ function PlayerPanel({
       )}
 
       {/* Current games */}
-      <div className="text-[5.5rem] landscape:text-[6rem] font-black text-white leading-none mb-1 pl-9">
+      <div className="text-[5.5rem] landscape:text-[6rem] font-bold text-zinc-900 leading-none mb-1 pl-9">
         {currentSetGames}
       </div>
 
       {/* Current points */}
-      <div className="text-[8rem] landscape:text-[9rem] font-black text-white leading-none pl-9">
+      <div className="text-[8rem] landscape:text-[9rem] font-bold text-zinc-900 leading-none pl-9">
         {pointLabel}
       </div>
     </button>
@@ -208,22 +208,22 @@ function WinnerScreen({
   const winnerName = winner === 0 ? config.player1Name : config.player2Name;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-      <h2 className="text-5xl font-black text-white text-center tracking-tight">{winnerName}</h2>
-      <p className="text-neutral-600 text-sm tracking-widest uppercase">wins the match</p>
-      <div className="text-4xl font-black text-white tracking-tight">
+    <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 bg-white">
+      <h2 className="text-5xl font-bold text-zinc-900 text-center tracking-tight">{winnerName}</h2>
+      <p className="text-zinc-400 text-sm tracking-widest uppercase">wins the match</p>
+      <div className="text-4xl font-bold text-zinc-900 tracking-tight">
         {winner === 0 ? p1Sets : p2Sets} – {winner === 0 ? p2Sets : p1Sets}
       </div>
       <div className="flex gap-3 mt-6">
         <button
           onClick={onRematch}
-          className="px-8 py-4 bg-white text-black font-black tracking-wide active:scale-95 transition-transform"
+          className="px-8 py-4 bg-zinc-900 text-white font-bold tracking-wide active:scale-95 transition-transform"
         >
           Rematch
         </button>
         <button
           onClick={onNewMatch}
-          className="px-8 py-4 border border-neutral-800 text-white font-black tracking-wide active:scale-95 transition-transform"
+          className="px-8 py-4 border border-zinc-200 text-zinc-700 font-bold tracking-wide active:scale-95 transition-transform"
         >
           New Match
         </button>

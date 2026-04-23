@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Victor_Mono } from "next/font/google";
 import "./globals.css";
+
+const victorMono = Victor_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-victor-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Tennis / Padel Scorer",
@@ -15,8 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-900 text-white min-h-screen">{children}</body>
+    <html lang="en" className={victorMono.variable}>
+      <body className="bg-white text-zinc-900 min-h-screen">{children}</body>
     </html>
   );
 }
