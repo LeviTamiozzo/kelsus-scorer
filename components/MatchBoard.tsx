@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import type { MatchConfig, Player } from "@/types";
 import { useMatchState } from "@/hooks/useMatchState";
 import { useVoiceCommands } from "@/hooks/useVoiceCommands";
@@ -31,13 +31,17 @@ export default function MatchBoard() {
   const { state, addPoint, undoPoint, setGameScore, winGame, setCurrentSetGames } = useMatchState(config);
   const { sets, currentSet, currentGame, isTiebreak, isSuperTiebreak, winner, server } = state;
 
+  const [ejected, setEjected] = useState(false);
+  const handleInsult = useCallback(() => setEjected(true), []);
+
   const { isListening, isSupported, feedback, toggleListening } = useVoiceCommands({
     config,
     onWinGame: winGame,
     onUndo: undoPoint,
     onSetGameScore: setGameScore,
     onSetCurrentSet: setCurrentSetGames,
-    active: winner === null,
+    onInsult: handleInsult,
+    active: winner === null && !ejected,
   });
 
   function getPointLabel(playerIdx: Player): string {
@@ -107,7 +111,9 @@ export default function MatchBoard() {
         </div>
       </div>
 
-      {winner !== null ? (
+      {ejected ? (
+        <RedCardScreen onDismiss={() => router.push("/")} />
+      ) : winner !== null ? (
         <WinnerScreen
           winner={winner}
           config={config}
@@ -292,6 +298,57 @@ function WinnerScreen({
           className="px-7 py-3.5 border border-white/20 text-white/70 font-bold tracking-wide rounded-lg active:scale-95 transition-transform uppercase text-sm"
         >
           New Match
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RedCardScreen({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] bg-red-600 flex flex-col items-center justify-center p-6 overflow-hidden animate-red-card-in">
+      {/* Pulsing background overlay */}
+      <div className="absolute inset-0 bg-red-700 animate-red-pulse pointer-events-none" />
+
+      {/* Spinning warning stripes */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none animate-spin-slow"
+        style={{
+          backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 40px, #000 40px, #000 80px)",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col items-center gap-5 max-w-md text-center">
+        {/* Flashing WARNING banner */}
+        <div className="text-yellow-300 text-xs font-bold tracking-[0.5em] uppercase animate-flash">
+          ⚠ WARNING ⚠ WARNING ⚠ WARNING ⚠
+        </div>
+
+        {/* MATCH CANCELLED */}
+        <h1 className="text-4xl landscape:text-5xl font-extrabold text-white uppercase tracking-tight animate-flash-fast">
+          Match Cancelled
+        </h1>
+
+        {/* Ridiculous sportsmanship message */}
+        <p className="text-red-200 text-sm landscape:text-base leading-relaxed uppercase tracking-wide font-semibold">
+          Unsportsmanlike conduct detected.
+          <br />
+          This is a <span className="text-yellow-300 animate-flash">CLEAN GAME</span> zone.
+          <br />
+          Please show respect to your opponent,
+          <br />
+          the umpire, and the sport itself.
+        </p>
+
+        <div className="text-yellow-300/80 text-[10px] tracking-[0.3em] uppercase animate-flash font-bold mt-1">
+          ⚠ Code Violation — Verbal Abuse ⚠
+        </div>
+
+        {/* Dismiss button */}
+        <button
+          onClick={onDismiss}
+          className="mt-4 px-8 py-3 bg-white text-red-600 font-bold text-sm uppercase tracking-widest rounded-lg active:scale-95 transition-transform"
+        >
+          I&apos;ll Behave
         </button>
       </div>
     </div>

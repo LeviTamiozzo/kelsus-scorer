@@ -10,7 +10,8 @@ type VoiceCommand =
   | { type: "winGame"; player: Player }
   | { type: "undo" }
   | { type: "setGameScore"; p1: number; p2: number; deuce?: boolean; advantage?: Player | null }
-  | { type: "setCurrentSet"; p1Games: number; p2Games: number };
+  | { type: "setCurrentSet"; p1Games: number; p2Games: number }
+  | { type: "insult" };
 
 // Tennis point words in Spanish
 const GAME_POINTS: Record<string, number> = {
@@ -119,6 +120,10 @@ function parse(raw: string, config: MatchConfig): VoiceCommand | null {
     }
   }
 
+  if (/concha.{0,5}(tu|su).{0,5}madre/.test(t)) return { type: "insult" };
+  if (/puta.{0,5}que.{0,5}(te|le).{0,5}pari[oó]/.test(t)) return { type: "insult" };
+  if (/hijo.{0,5}de.{0,5}puta/.test(t)) return { type: "insult" };
+
   return null;
 }
 
@@ -135,6 +140,7 @@ interface Options {
   onUndo: () => void;
   onSetGameScore: (p1: number, p2: number, opts?: { deuce?: boolean; advantage?: Player | null }) => void;
   onSetCurrentSet: (p1Games: number, p2Games: number) => void;
+  onInsult?: () => void;
   active: boolean;
 }
 
@@ -144,6 +150,7 @@ export function useVoiceCommands({
   onUndo,
   onSetGameScore,
   onSetCurrentSet,
+  onInsult,
   active,
 }: Options): UseVoiceCommandsResult {
   const [isListening, setIsListening] = useState(false);
@@ -155,11 +162,13 @@ export function useVoiceCommands({
   const onUndoRef = useRef(onUndo);
   const onSetGameScoreRef = useRef(onSetGameScore);
   const onSetCurrentSetRef = useRef(onSetCurrentSet);
+  const onInsultRef = useRef(onInsult);
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { onWinGameRef.current = onWinGame; }, [onWinGame]);
   useEffect(() => { onUndoRef.current = onUndo; }, [onUndo]);
   useEffect(() => { onSetGameScoreRef.current = onSetGameScore; }, [onSetGameScore]);
   useEffect(() => { onSetCurrentSetRef.current = onSetCurrentSet; }, [onSetCurrentSet]);
+  useEffect(() => { onInsultRef.current = onInsult; }, [onInsult]);
 
   const recognitionRef = useRef<SR>(null);
   const activeRef = useRef(false);
@@ -202,6 +211,9 @@ export function useVoiceCommands({
       case "setCurrentSet":
         onSetCurrentSetRef.current(cmd.p1Games, cmd.p2Games);
         showFeedback(`Set  ${cmd.p1Games} – ${cmd.p2Games}`);
+        break;
+      case "insult":
+        onInsultRef.current?.();
         break;
     }
   }, [showFeedback]);
