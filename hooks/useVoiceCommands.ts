@@ -34,6 +34,17 @@ const NUMBERS: Record<string, number> = {
   nueve: 9, "9": 9,
 };
 
+// Extended range used only for tiebreak parsing (covers super tiebreak extended play)
+const TB_NUMBERS: Record<string, number> = {
+  ...NUMBERS,
+  diez: 10, "10": 10,
+  once: 11, "11": 11,
+  doce: 12, "12": 12,
+  // English — players often mix languages
+  zero: 0, one: 1, two: 2, three: 3, four: 4,
+  five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+};
+
 // Fix common speech-to-text mishearings for Spanish tennis/padel
 function normalizeTranscript(t: string): string {
   const fixes: [RegExp, string][] = [
@@ -78,7 +89,7 @@ function resolvePlayer(text: string, config: MatchConfig): Player | null {
   return null;
 }
 
-function parse(raw: string, config: MatchConfig, isInTiebreak: boolean): VoiceCommand | null {
+function parse(raw: string, config: MatchConfig, tiebreakTarget: number | null): VoiceCommand | null {
   let t = raw.toLowerCase().trim().replace(/[.,!?¿¡]/g, "").replace(/\s+/g, " ");
   t = normalizeTranscript(t);
 
@@ -155,24 +166,10 @@ function parse(raw: string, config: MatchConfig, isInTiebreak: boolean): VoiceCo
     }
   }
 
-  // When in tiebreak, bare "N M" is enough (no prefix needed)
-  if (isInTiebreak) {
-    const words = t.trim().split(" ");
-    if (words.length === 2) {
-      const p1 = NUMBERS[words[0]];
-      const p2 = NUMBERS[words[1]];
-      if (p1 !== undefined && p2 !== undefined) {
-        return { type: "setTiebreakPoints", p1, p2 };
-      }
-    }
-    // Concatenated digits: "67" → 6, 7
-    if (words.length === 1 && /^\d\d$/.test(words[0])) {
-      const p1 = NUMBERS[words[0][0]];
-      const p2 = NUMBERS[words[0][1]];
-      if (p1 !== undefined && p2 !== undefined) {
-        return { type: "setTiebreakPoints", p1, p2 };
-      }
-    }
+  // Tiebreak score — only active when in a tiebreak to avoid false positives elsewhere
+  if (tiebreakTarget !== null) {
+    const score = parseTiebreakScore(t, tiebreakTarget);
+    if (score) return { type: "setTiebreakPoints", p1: score[0], p2: score[1] };
   }
 
   if (/concha.{0,5}(tu|su).{0,5}madre/.test(t)) return { type: "insult" };
@@ -191,14 +188,70 @@ function parse(raw: string, config: MatchConfig, isInTiebreak: boolean): VoiceCo
   return null;
 }
 
+// Extracts and validates a tiebreak score pair from a transcript.
+// Handles filler words, the "a" connector ("cuatro a tres"), hyphens, and
+// concatenated digit strings ("76" → 7-6, "107" → 10-7).
+// Returns null for scores that couldn't occur in play (e.g. 8-5 when target=7).
+function parseTiebreakScore(t: string, target: number): [number, number] | null {
+  const s = t
+    .replace(/\b(tiebreak|tb)\b/g, "")
+    .replace(/\s+a\s+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const tokens = s.split(/[\s\-]+/).filter(Boolean);
+
+  // Scan all adjacent token pairs — filler words are simply skipped over
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const v1 = TB_NUMBERS[tokens[i]];
+    const v2 = TB_NUMBERS[tokens[i + 1]];
+    if (v1 !== undefined && v2 !== undefined && isValidTiebreakScore(v1, v2, target)) {
+      return [v1, v2];
+    }
+  }
+
+  // Handle concatenated digit strings the recognizer merges: "43"→4,3 "76"→7,6 "107"→10,7
+  for (const token of tokens) {
+    if (/^\d{2,3}$/.test(token)) {
+      for (let split = 1; split < token.length; split++) {
+        const v1 = TB_NUMBERS[token.slice(0, split)];
+        const v2 = TB_NUMBERS[token.slice(split)];
+        if (v1 !== undefined && v2 !== undefined && isValidTiebreakScore(v1, v2, target)) {
+          return [v1, v2];
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+// A score is valid if it could actually occur in tiebreak play.
+// Once above the target, a difference > 2 means the tiebreak should have ended earlier.
+function isValidTiebreakScore(p1: number, p2: number, target: number): boolean {
+  if (p1 < 0 || p2 < 0) return false;
+  const max = Math.max(p1, p2);
+  const diff = Math.abs(p1 - p2);
+  if (max <= target) return true;
+  return diff <= 2;
+}
+
 // Build a JSGF grammar string to bias the recognizer toward known commands
-function buildGrammar(config: MatchConfig): string {
+function buildGrammar(config: MatchConfig, tiebreakTarget: number | null): string {
   const p1 = config.player1Name.toLowerCase();
   const p2 = config.player2Name.toLowerCase();
   const playerAlts = [p1, p2, "jugador uno", "jugador dos", "jugador 1", "jugador 2"].join(" | ");
+  const tbMax = tiebreakTarget !== null ? tiebreakTarget + 2 : 0;
+  const tbNumbers = tiebreakTarget !== null
+    ? Array.from({ length: tbMax + 1 }, (_, i) => String(i)).join(" | ")
+    : "";
+  const tbCmd = tiebreakTarget !== null ? " | <tb_cmd>" : "";
+  const tbRule = tiebreakTarget !== null
+    ? `\n<tb_cmd> = <tb_n> <tb_n>;\n<tb_n> = ${tbNumbers};`
+    : "";
   return `#JSGF V1.0 UTF-8;
 grammar tennis;
-public <command> = <undo> | <game_cmd> | <set_cmd>;
+public <command> = <undo> | <game_cmd> | <set_cmd>${tbCmd};
 <undo> = deshacer | undo | volver | anular;
 <game_cmd> = game <game_arg>;
 <game_arg> = <score> | <player> | <deuce> | <advantage>;
@@ -207,7 +260,7 @@ public <command> = <undo> | <game_cmd> | <set_cmd>;
 <score> = cero quince | cero treinta | cero cuarenta | quince cero | quince quince | quince treinta | quince cuarenta | treinta cero | treinta quince | treinta treinta | treinta cuarenta | cuarenta cero | cuarenta quince | cuarenta treinta;
 <set_cmd> = set <number> <number> | parcial <number> <number>;
 <player> = ${playerAlts};
-<number> = cero | uno | dos | tres | cuatro | cinco | seis | siete | ocho | nueve | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;`;
+<number> = cero | uno | dos | tres | cuatro | cinco | seis | siete | ocho | nueve | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;${tbRule}`;
 }
 
 export interface UseVoiceCommandsResult {
@@ -227,7 +280,8 @@ interface Options {
   onInsult?: () => void;
   active: boolean;
   currentServer: Player;
-  isInTiebreak: boolean;
+  /** 7 for regular tiebreak, 10 for super tiebreak, null when not in tiebreak */
+  tiebreakTarget: number | null;
 }
 
 export function useVoiceCommands({
@@ -240,7 +294,7 @@ export function useVoiceCommands({
   onInsult,
   active,
   currentServer,
-  isInTiebreak,
+  tiebreakTarget,
 }: Options): UseVoiceCommandsResult {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
@@ -253,7 +307,7 @@ export function useVoiceCommands({
   const onSetCurrentSetRef = useRef(onSetCurrentSet);
   const onSetTiebreakPointsRef = useRef(onSetTiebreakPoints);
   const currentServerRef = useRef(currentServer);
-  const isInTiebreakRef = useRef(isInTiebreak);
+  const tiebreakTargetRef = useRef(tiebreakTarget);
   const onInsultRef = useRef(onInsult);
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { onWinGameRef.current = onWinGame; }, [onWinGame]);
@@ -262,7 +316,7 @@ export function useVoiceCommands({
   useEffect(() => { onSetCurrentSetRef.current = onSetCurrentSet; }, [onSetCurrentSet]);
   useEffect(() => { onSetTiebreakPointsRef.current = onSetTiebreakPoints; }, [onSetTiebreakPoints]);
   useEffect(() => { currentServerRef.current = currentServer; }, [currentServer]);
-  useEffect(() => { isInTiebreakRef.current = isInTiebreak; }, [isInTiebreak]);
+  useEffect(() => { tiebreakTargetRef.current = tiebreakTarget; }, [tiebreakTarget]);
   useEffect(() => { onInsultRef.current = onInsult; }, [onInsult]);
 
   const recognitionRef = useRef<SR>(null);
@@ -356,7 +410,7 @@ export function useVoiceCommands({
     if (GrammarList) {
       try {
         const gl = new GrammarList();
-        gl.addFromString(buildGrammar(configRef.current), 1);
+        gl.addFromString(buildGrammar(configRef.current, tiebreakTargetRef.current), 1);
         rec.grammars = gl;
       } catch (_) { /* grammar hints are optional */ }
     }
@@ -368,7 +422,7 @@ export function useVoiceCommands({
         const transcript: string = results[i].transcript;
         const confidence: number = results[i].confidence;
         console.log(`[Voice] Alt ${i}: "${transcript}" (${(confidence * 100).toFixed(0)}%)`);
-        const cmd = parse(transcript.trim().toLocaleLowerCase(), configRef.current, isInTiebreakRef.current);
+        const cmd = parse(transcript.trim().toLocaleLowerCase(), configRef.current, tiebreakTargetRef.current);
         if (cmd) {
           console.log(`[Voice] Command recognized (alt ${i}):`, cmd);
           executeRef.current(cmd);
