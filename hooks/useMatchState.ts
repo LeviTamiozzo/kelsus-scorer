@@ -214,11 +214,29 @@ export function useMatchState(config: MatchConfig) {
       if (prev.winner !== null) return prev;
       const snapshot = snapshotState(prev);
       const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
+      const newGames: [number, number] = [p1Games, p2Games];
       sets[prev.currentSet] = {
         ...sets[prev.currentSet],
-        games: [p1Games, p2Games],
+        games: newGames,
         winner: determineSetWinner(p1Games, p2Games, prev.config.gamesPerSet),
       };
+
+      // If the corrected score lands exactly on the tiebreak trigger (e.g. 6-6),
+      // enter tiebreak mode — same logic as applyGameWin.
+      if (!prev.isTiebreak && !prev.isSuperTiebreak && checkTiebreakNeeded(prev, newGames)) {
+        sets[prev.currentSet].tiebreakPoints = [0, 0];
+        const isFinal = isFinalSet(prev);
+        const superTB = isFinal && prev.config.finalSetSuperTiebreak;
+        return {
+          ...prev,
+          sets,
+          isTiebreak: !superTB,
+          isSuperTiebreak: superTB,
+          currentGame: initialGame(),
+          history: [...prev.history, snapshot],
+        };
+      }
+
       return { ...prev, sets, history: [...prev.history, snapshot] };
     });
   }, []);
@@ -260,23 +278,31 @@ export function useMatchState(config: MatchConfig) {
     setState((prev) => {
       if (prev.winner !== null) return prev;
       if (!prev.isTiebreak && !prev.isSuperTiebreak) return prev;
+
+      const target = prev.isSuperTiebreak ? 10 : 7;
+      const max = Math.max(p1Points, p2Points);
+      const diff = Math.abs(p1Points - p2Points);
+
+      if (p1Points < 0 || p2Points < 0) return prev;
+      if (max > target && diff > 2) return prev;
+
       const snapshot = snapshotState(prev);
       const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
       const currentSetData = sets[prev.currentSet];
       currentSetData.tiebreakPoints = [p1Points, p2Points];
 
-      const target = prev.isSuperTiebreak ? 10 : 7;
-      const leader: Player = p1Points >= p2Points ? 0 : 1;
-      const high = Math.max(p1Points, p2Points);
-      const low = Math.min(p1Points, p2Points);
-      const won = high >= target && high - low >= 2;
+      // Auto-complete: if this is a winning score, advance the set immediately.
+      const winner: Player | null =
+        p1Points >= target && p1Points - p2Points >= 2 ? 0 :
+        p2Points >= target && p2Points - p1Points >= 2 ? 1 :
+        null;
 
-      if (won) {
-        currentSetData.winner = leader;
+      if (winner !== null) {
+        currentSetData.winner = winner;
         const newServer: Player = prev.server === 0 ? 1 : 0;
         const next = advanceSet(
           { ...prev, sets, isTiebreak: false, isSuperTiebreak: false, currentGame: initialGame(), server: newServer },
-          leader,
+          winner,
           sets,
         );
         return { ...next, history: [...prev.history, snapshot] };

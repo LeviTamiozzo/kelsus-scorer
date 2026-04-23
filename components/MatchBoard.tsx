@@ -53,7 +53,7 @@ export default function MatchBoard() {
     onSetCurrentSet: setCurrentSetGames,
     onSetTiebreakPoints: setTiebreakPoints,
     currentServer,
-    isInTiebreak: isInTiebreak,
+    tiebreakTarget: isTiebreak ? 7 : isSuperTiebreak ? 10 : null,
     onInsult: handleInsult,
     active: winner === null && !ejected,
   });
