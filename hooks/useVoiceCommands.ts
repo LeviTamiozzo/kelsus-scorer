@@ -49,11 +49,13 @@ function resolvePlayer(text: string, config: MatchConfig): Player | null {
 function parse(raw: string, config: MatchConfig): VoiceCommand | null {
   const t = raw.toLowerCase().trim().replace(/[.,!?¿¡]/g, "").replace(/\s+/g, " ");
 
+  console.log("t", t);
   // Undo — "deshacer" or "undo"
   if (/^(deshacer|undo|deshaz)$/.test(t)) return { type: "undo" };
 
   // --- game prefix commands ---
   if (t.startsWith("game ")) {
+    console.log(`[Voice] Parsing game command: "${t}"`);
     const rest = t.slice(5).trim();
 
     // "game deuce" | "game iguales"
@@ -82,15 +84,35 @@ function parse(raw: string, config: MatchConfig): VoiceCommand | null {
         return { type: "setGameScore", p1: s1, p2: s2 };
       }
     }
+    // Recognizer sometimes concatenates digits: "1540" instead of "15 40"
+    if (words.length === 1) {
+      const SCORE_TOKENS = ["40", "30", "15", "0"];
+      for (const v1 of SCORE_TOKENS) {
+        if (words[0].startsWith(v1)) {
+          const v2 = words[0].slice(v1.length);
+          if (SCORE_TOKENS.includes(v2)) {
+            return { type: "setGameScore", p1: GAME_POINTS[v1], p2: GAME_POINTS[v2] };
+          }
+        }
+      }
+    }
   }
 
   // --- set prefix commands ---
-  // "set 6 1" | "set seis uno"
+  // "set 6 1" | "set seis uno" | "set 61" (concatenated)
   if (t.startsWith("set ")) {
     const words = t.slice(4).trim().split(" ");
     if (words.length === 2) {
       const g1 = NUMBERS[words[0]];
       const g2 = NUMBERS[words[1]];
+      if (g1 !== undefined && g2 !== undefined) {
+        return { type: "setCurrentSet", p1Games: g1, p2Games: g2 };
+      }
+    }
+    // Recognizer concatenates single digits: "61" instead of "6 1"
+    if (words.length === 1 && /^\d\d$/.test(words[0])) {
+      const g1 = NUMBERS[words[0][0]];
+      const g2 = NUMBERS[words[0][1]];
       if (g1 !== undefined && g2 !== undefined) {
         return { type: "setCurrentSet", p1Games: g1, p2Games: g2 };
       }
@@ -196,6 +218,7 @@ export function useVoiceCommands({
       recognitionRef.current = null;
     }
     setIsListening(false);
+    console.log("[Voice] Listening stopped");
   }, []);
 
   const startListening = useCallback(() => {
@@ -208,11 +231,20 @@ export function useVoiceCommands({
 
     rec.onresult = (event: SR) => {
       const transcript: string = event.results[event.results.length - 1][0].transcript;
-      const cmd = parse(transcript, configRef.current);
-      if (cmd) executeRef.current(cmd);
+      const confidence: number = event.results[event.results.length - 1][0].confidence;
+      console.log(`[Voice] Heard: "${transcript}" (confidence: ${(confidence * 100).toFixed(0)}%)`);
+      const cmd = parse(transcript.trim().toLocaleLowerCase(), configRef.current);
+      console.log({ cmd });
+      if (cmd) {
+        console.log(`[Voice] Command recognized:`, cmd);
+        executeRef.current(cmd);
+      } else {
+        console.log(`[Voice] No command matched for: "${transcript}"`);
+      }
     };
 
     rec.onerror = (event: SR) => {
+      console.log(`[Voice] Error: ${event.error}`);
       if (event.error !== "no-speech") stopListening();
     };
 
@@ -227,8 +259,10 @@ export function useVoiceCommands({
     try {
       rec.start();
       setIsListening(true);
+      console.log("[Voice] Listening started (es-ES)");
     } catch (_) {
       activeRef.current = false;
+      console.log("[Voice] Failed to start");
     }
   }, [isSupported, stopListening]);
 
