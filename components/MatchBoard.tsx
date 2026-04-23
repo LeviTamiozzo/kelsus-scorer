@@ -83,13 +83,28 @@ export default function MatchBoard() {
         <span className="text-emerald-400/60 text-xs font-semibold tracking-widest uppercase">
           {isInTiebreak ? (isSuperTiebreak ? "Super TB" : "Tiebreak") : ""}
         </span>
-        <button
-          onClick={undoPoint}
-          className="text-slate-500 text-xs font-semibold tracking-widest uppercase active:text-white transition-colors disabled:opacity-20"
-          disabled={state.history.length === 0}
-        >
-          Undo
-        </button>
+
+        <div className="flex items-center gap-4">
+          {isSupported && (
+            <button
+              onClick={toggleListening}
+              className={`text-xs font-semibold tracking-widest uppercase transition-colors ${
+                isListening
+                  ? "text-[#4ade80] animate-pulse"
+                  : "text-slate-500 active:text-white"
+              }`}
+            >
+              {isListening ? "● Mic" : "Mic"}
+            </button>
+          )}
+          <button
+            onClick={undoPoint}
+            className="text-slate-500 text-xs font-semibold tracking-widest uppercase active:text-white transition-colors disabled:opacity-20"
+            disabled={state.history.length === 0}
+          >
+            Undo
+          </button>
+        </div>
       </div>
 
       {winner !== null ? (
@@ -132,7 +147,7 @@ export default function MatchBoard() {
       {/* Voice feedback toast */}
       {feedback && (
         <div className="fixed bottom-8 inset-x-0 flex justify-center pointer-events-none z-50">
-          <div className="bg-zinc-900 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg">
+          <div className="bg-[#4ade80] text-[#0a1628] text-xs font-bold px-5 py-2.5 rounded-full shadow-lg tracking-widest uppercase">
             {feedback}
           </div>
         </div>
