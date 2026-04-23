@@ -19,3 +19,36 @@ button, input, select, textarea {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* Red card ejection animations */
+@keyframes red-card-in {
+  0% { opacity: 0; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes red-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.3; }
+}
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes flash-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-red-card-in { animation: red-card-in 0.3s ease-out; }
+.animate-red-pulse { animation: red-pulse 1.5s ease-in-out infinite; }
+.animate-flash { animation: flash 0.8s steps(1) infinite; }
+.animate-flash-fast { animation: flash-fast 0.4s ease-in-out infinite; }
+.animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 30s linear infinite; }
