@@ -201,6 +201,7 @@ interface Options {
   onSetCurrentSet: (p1Games: number, p2Games: number) => void;
   onInsult?: () => void;
   active: boolean;
+  currentServer: Player;
 }
 
 export function useVoiceCommands({
@@ -211,6 +212,7 @@ export function useVoiceCommands({
   onSetCurrentSet,
   onInsult,
   active,
+  currentServer,
 }: Options): UseVoiceCommandsResult {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
@@ -221,12 +223,14 @@ export function useVoiceCommands({
   const onUndoRef = useRef(onUndo);
   const onSetGameScoreRef = useRef(onSetGameScore);
   const onSetCurrentSetRef = useRef(onSetCurrentSet);
+  const currentServerRef = useRef(currentServer);
   const onInsultRef = useRef(onInsult);
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { onWinGameRef.current = onWinGame; }, [onWinGame]);
   useEffect(() => { onUndoRef.current = onUndo; }, [onUndo]);
   useEffect(() => { onSetGameScoreRef.current = onSetGameScore; }, [onSetGameScore]);
   useEffect(() => { onSetCurrentSetRef.current = onSetCurrentSet; }, [onSetCurrentSet]);
+  useEffect(() => { currentServerRef.current = currentServer; }, [currentServer]);
   useEffect(() => { onInsultRef.current = onInsult; }, [onInsult]);
 
   const recognitionRef = useRef<SR>(null);
@@ -257,16 +261,22 @@ export function useVoiceCommands({
         onUndoRef.current();
         showFeedback("Deshecho");
         break;
-      case "setGameScore":
-        onSetGameScoreRef.current(cmd.p1, cmd.p2, { deuce: cmd.deuce, advantage: cmd.advantage });
+      case "setGameScore": {
+        let { p1, p2 } = cmd;
+        // Voice scores are server-relative: first = server, second = receiver
+        if (!cmd.deuce && currentServerRef.current === 1) {
+          [p1, p2] = [p2, p1];
+        }
+        onSetGameScoreRef.current(p1, p2, { deuce: cmd.deuce, advantage: cmd.advantage });
         showFeedback(
           cmd.deuce
             ? cmd.advantage != null
               ? `Ventaja — ${cmd.advantage === 0 ? cfg.player1Name : cfg.player2Name}`
               : "Deuce"
-            : `${LABELS[cmd.p1]} – ${LABELS[cmd.p2]}`
+            : `${LABELS[p1]} – ${LABELS[p2]}`
         );
         break;
+      }
       case "setCurrentSet":
         onSetCurrentSetRef.current(cmd.p1Games, cmd.p2Games);
         showFeedback(`Set  ${cmd.p1Games} – ${cmd.p2Games}`);
