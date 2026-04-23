@@ -178,6 +178,15 @@ function parse(raw: string, config: MatchConfig, isInTiebreak: boolean): VoiceCo
   if (/concha.{0,5}(tu|su).{0,5}madre/.test(t)) return { type: "insult" };
   if (/puta.{0,5}que.{0,5}(te|le).{0,5}pari[oó]/.test(t)) return { type: "insult" };
   if (/hijo.{0,5}de.{0,5}puta/.test(t)) return { type: "insult" };
+  const insultPatterns = [
+    /la\s+(re\s+)?concha/,
+    /concha.{0,5}(tu|su).{0,5}(madre|hermana)/,
+    /puta\s+madre/,
+    /que\s+(te|le)\s+(re\s+)?pari[oó]/,
+    /hijo.{0,5}(de\s+)?(tu\s+)?puta/,
+    /mierda/,
+  ];
+  if (insultPatterns.some((p) => p.test(t))) return { type: "insult" };
 
   return null;
 }
