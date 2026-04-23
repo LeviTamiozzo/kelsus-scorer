@@ -256,5 +256,19 @@ export function useMatchState(config: MatchConfig) {
     });
   }, []);
 
-  return { state, addPoint, undoPoint, setGameScore, setSetGames, winGame, setCurrentSetGames };
+  const setTiebreakPoints = useCallback((p1Points: number, p2Points: number) => {
+    setState((prev) => {
+      if (prev.winner !== null) return prev;
+      if (!prev.isTiebreak && !prev.isSuperTiebreak) return prev;
+      const snapshot = snapshotState(prev);
+      const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
+      sets[prev.currentSet] = {
+        ...sets[prev.currentSet],
+        tiebreakPoints: [p1Points, p2Points],
+      };
+      return { ...prev, sets, history: [...prev.history, snapshot] };
+    });
+  }, []);
+
+  return { state, addPoint, undoPoint, setGameScore, setSetGames, winGame, setCurrentSetGames, setTiebreakPoints };
 }

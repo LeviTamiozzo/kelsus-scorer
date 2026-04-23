@@ -11,6 +11,7 @@ type VoiceCommand =
   | { type: "undo" }
   | { type: "setGameScore"; p1: number; p2: number; deuce?: boolean; advantage?: Player | null }
   | { type: "setCurrentSet"; p1Games: number; p2Games: number }
+  | { type: "setTiebreakPoints"; p1: number; p2: number }
   | { type: "insult" };
 
 const GAME_POINTS: Record<string, number> = {
@@ -77,7 +78,7 @@ function resolvePlayer(text: string, config: MatchConfig): Player | null {
   return null;
 }
 
-function parse(raw: string, config: MatchConfig): VoiceCommand | null {
+function parse(raw: string, config: MatchConfig, isInTiebreak: boolean): VoiceCommand | null {
   let t = raw.toLowerCase().trim().replace(/[.,!?¿¡]/g, "").replace(/\s+/g, " ");
   t = normalizeTranscript(t);
 
@@ -154,6 +155,26 @@ function parse(raw: string, config: MatchConfig): VoiceCommand | null {
     }
   }
 
+  // When in tiebreak, bare "N M" is enough (no prefix needed)
+  if (isInTiebreak) {
+    const words = t.trim().split(" ");
+    if (words.length === 2) {
+      const p1 = NUMBERS[words[0]];
+      const p2 = NUMBERS[words[1]];
+      if (p1 !== undefined && p2 !== undefined) {
+        return { type: "setTiebreakPoints", p1, p2 };
+      }
+    }
+    // Concatenated digits: "67" → 6, 7
+    if (words.length === 1 && /^\d\d$/.test(words[0])) {
+      const p1 = NUMBERS[words[0][0]];
+      const p2 = NUMBERS[words[0][1]];
+      if (p1 !== undefined && p2 !== undefined) {
+        return { type: "setTiebreakPoints", p1, p2 };
+      }
+    }
+  }
+
   if (/concha.{0,5}(tu|su).{0,5}madre/.test(t)) return { type: "insult" };
   if (/puta.{0,5}que.{0,5}(te|le).{0,5}pari[oó]/.test(t)) return { type: "insult" };
   if (/hijo.{0,5}de.{0,5}puta/.test(t)) return { type: "insult" };
@@ -193,9 +214,11 @@ interface Options {
   onUndo: () => void;
   onSetGameScore: (p1: number, p2: number, opts?: { deuce?: boolean; advantage?: Player | null }) => void;
   onSetCurrentSet: (p1Games: number, p2Games: number) => void;
+  onSetTiebreakPoints: (p1: number, p2: number) => void;
   onInsult?: () => void;
   active: boolean;
   currentServer: Player;
+  isInTiebreak: boolean;
 }
 
 export function useVoiceCommands({
@@ -204,9 +227,11 @@ export function useVoiceCommands({
   onUndo,
   onSetGameScore,
   onSetCurrentSet,
+  onSetTiebreakPoints,
   onInsult,
   active,
   currentServer,
+  isInTiebreak,
 }: Options): UseVoiceCommandsResult {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
@@ -217,14 +242,18 @@ export function useVoiceCommands({
   const onUndoRef = useRef(onUndo);
   const onSetGameScoreRef = useRef(onSetGameScore);
   const onSetCurrentSetRef = useRef(onSetCurrentSet);
+  const onSetTiebreakPointsRef = useRef(onSetTiebreakPoints);
   const currentServerRef = useRef(currentServer);
+  const isInTiebreakRef = useRef(isInTiebreak);
   const onInsultRef = useRef(onInsult);
   useEffect(() => { configRef.current = config; }, [config]);
   useEffect(() => { onWinGameRef.current = onWinGame; }, [onWinGame]);
   useEffect(() => { onUndoRef.current = onUndo; }, [onUndo]);
   useEffect(() => { onSetGameScoreRef.current = onSetGameScore; }, [onSetGameScore]);
   useEffect(() => { onSetCurrentSetRef.current = onSetCurrentSet; }, [onSetCurrentSet]);
+  useEffect(() => { onSetTiebreakPointsRef.current = onSetTiebreakPoints; }, [onSetTiebreakPoints]);
   useEffect(() => { currentServerRef.current = currentServer; }, [currentServer]);
+  useEffect(() => { isInTiebreakRef.current = isInTiebreak; }, [isInTiebreak]);
   useEffect(() => { onInsultRef.current = onInsult; }, [onInsult]);
 
   const recognitionRef = useRef<SR>(null);
@@ -275,6 +304,14 @@ export function useVoiceCommands({
         onSetCurrentSetRef.current(cmd.p1Games, cmd.p2Games);
         showFeedback(`Set  ${cmd.p1Games} – ${cmd.p2Games}`);
         break;
+      case "setTiebreakPoints": {
+        let { p1, p2 } = cmd;
+        // Server-relative: first number = server, second = receiver
+        if (currentServerRef.current === 1) [p1, p2] = [p2, p1];
+        onSetTiebreakPointsRef.current(p1, p2);
+        showFeedback(`Puntos  ${p1} – ${p2}`);
+        break;
+      }
       case "insult":
         onInsultRef.current?.();
         break;
@@ -322,7 +359,7 @@ export function useVoiceCommands({
         const transcript: string = results[i].transcript;
         const confidence: number = results[i].confidence;
         console.log(`[Voice] Alt ${i}: "${transcript}" (${(confidence * 100).toFixed(0)}%)`);
-        const cmd = parse(transcript.trim().toLocaleLowerCase(), configRef.current);
+        const cmd = parse(transcript.trim().toLocaleLowerCase(), configRef.current, isInTiebreakRef.current);
         if (cmd) {
           console.log(`[Voice] Command recognized (alt ${i}):`, cmd);
           executeRef.current(cmd);

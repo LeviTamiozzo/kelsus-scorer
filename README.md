@@ -49,6 +49,16 @@ Accepted point words: `cero`, `amor`, `quince`, `treinta`, `cuarenta` (also the 
 | `set tres cuatro` | Set current set to 3 – 4 |
 | `set 6 1` | Same, using digits |
 
+### Tiebreak score — no prefix needed
+
+During a tiebreak or super tiebreak, just say the two numbers. Scores are server-relative (first = server, second = receiver).
+
+| Command | Effect |
+|---------|--------|
+| `1 0` | Set tiebreak to 1 – 0 |
+| `6 7` | Set tiebreak to 6 – 7 |
+| `seis siete` | Same, using words |
+
 ### Undo
 
 | Command | Effect |

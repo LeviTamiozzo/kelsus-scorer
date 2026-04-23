@@ -28,7 +28,7 @@ export default function MatchBoard() {
     }
   }, [searchParams]);
 
-  const { state, addPoint, undoPoint, setGameScore, winGame, setCurrentSetGames } = useMatchState(config);
+  const { state, addPoint, undoPoint, setGameScore, winGame, setCurrentSetGames, setTiebreakPoints } = useMatchState(config);
   const { sets, currentSet, currentGame, isTiebreak, isSuperTiebreak, winner, server } = state;
 
   const completedSets = sets.filter((s) => s.winner !== null);
@@ -51,7 +51,9 @@ export default function MatchBoard() {
     onUndo: undoPoint,
     onSetGameScore: setGameScore,
     onSetCurrentSet: setCurrentSetGames,
+    onSetTiebreakPoints: setTiebreakPoints,
     currentServer,
+    isInTiebreak: isInTiebreak,
     onInsult: handleInsult,
     active: winner === null && !ejected,
   });
