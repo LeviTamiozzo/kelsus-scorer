@@ -286,16 +286,6 @@ export function useMatchState(config: MatchConfig) {
       if (p1Points < 0 || p2Points < 0) return prev;
       if (max > target && diff > 2) return prev;
 
-
-      const target = prev.isSuperTiebreak ? 10 : 7;
-      const max = Math.max(p1Points, p2Points);
-      const diff = Math.abs(p1Points - p2Points);
-
-      // Reject scores that couldn't occur in play:
-      // once above target, a diff > 2 means the tiebreak would have ended earlier.
-      if (p1Points < 0 || p2Points < 0) return prev;
-      if (max > target && diff > 2) return prev;
-
       const snapshot = snapshotState(prev);
       const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
       const currentSetData = sets[prev.currentSet];
