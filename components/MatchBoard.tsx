@@ -208,41 +208,39 @@ function PlayerPanel({
         </span>
       </div>
 
-      {/* Score cells row */}
-      <div className="flex items-center gap-2 pl-5">
-        {/* Completed set scores */}
-        {completedSets.map((set, i) => (
-          <div
-            key={i}
-            className="w-10 h-13 flex items-center justify-center rounded-md bg-white/[0.04]"
-          >
-            <span
-              className={`text-lg font-bold tabular-nums ${
-                set.winner === playerSide ? "text-white/80" : "text-white/25"
-              }`}
+      {/* Completed sets row */}
+      {completedSets.length > 0 && (
+        <div className="flex items-center gap-2 pl-5 mb-3">
+          {completedSets.map((set, i) => (
+            <div
+              key={i}
+              className="w-12 h-12 flex items-center justify-center rounded-md bg-white/[0.04]"
             >
-              {set.games[playerSide]}
-              {set.tiebreakPoints !== undefined && (
-                <sup className="text-[10px] text-white/30 ml-px">
-                  {set.tiebreakPoints[playerSide]}
-                </sup>
-              )}
-            </span>
-          </div>
-        ))}
+              <span
+                className={`text-2xl font-bold tabular-nums ${
+                  set.winner === playerSide ? "text-white/80" : "text-white/25"
+                }`}
+              >
+                {set.games[playerSide]}
+                {set.tiebreakPoints !== undefined && (
+                  <sup className="text-xs text-white/30 ml-0.5">
+                    {set.tiebreakPoints[playerSide]}
+                  </sup>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
-        {completedSets.length > 0 && (
-          <div className="w-px h-12 bg-white/[0.08] mx-1" />
-        )}
-
-        {/* Current game score */}
+      {/* Current game + point score */}
+      <div className="flex items-center gap-2 pl-5">
         <div className="w-[5.5rem] h-[5.5rem] flex items-center justify-center rounded-lg bg-white/[0.07]">
           <span className="text-[3.5rem] font-extrabold text-white tabular-nums leading-none">
             {currentSetGames}
           </span>
         </div>
 
-        {/* Current point score */}
         <div className="min-w-[5.5rem] h-[5.5rem] px-2 flex items-center justify-center rounded-lg bg-[#4ade80]/[0.1]">
           <span className="text-[3.5rem] font-extrabold text-[#4ade80] tabular-nums leading-none">
             {pointLabel}
