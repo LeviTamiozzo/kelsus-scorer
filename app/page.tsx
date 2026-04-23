@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import type { MatchConfig, Player } from "@/types";
 
 const PRESETS = {
-  tennis3: { label: "Tennis Bo3", totalSets: 3, gamesPerSet: 6, hasTiebreak: true, finalSetSuperTiebreak: false, goldenPoint: false },
-  tennis5: { label: "Tennis Bo5", totalSets: 5, gamesPerSet: 6, hasTiebreak: true, finalSetSuperTiebreak: false, goldenPoint: false },
-  padel: { label: "Padel", totalSets: 3, gamesPerSet: 6, hasTiebreak: true, finalSetSuperTiebreak: true, goldenPoint: true },
+  tennis3: { label: "Best of 3", totalSets: 3, gamesPerSet: 6, hasTiebreak: true, finalSetSuperTiebreak: false, goldenPoint: false },
+  tennis5: { label: "Best of 5", totalSets: 5, gamesPerSet: 6, hasTiebreak: true, finalSetSuperTiebreak: false, goldenPoint: false },
   custom: { label: "Custom", totalSets: 3, gamesPerSet: 6, hasTiebreak: true, finalSetSuperTiebreak: false, goldenPoint: false },
 } as const;
 
@@ -114,6 +113,8 @@ export default function SetupPage() {
                 key={key}
                 onClick={() => applyPreset(key)}
                 className={`py-3 text-sm font-bold tracking-wide transition-colors ${
+                  key === "custom" ? "col-span-2" : ""
+                } ${
                   preset === key
                     ? "bg-zinc-900 text-white"
                     : "border border-zinc-200 text-zinc-400 hover:border-zinc-400"
@@ -187,18 +188,22 @@ export default function SetupPage() {
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-zinc-500 text-sm">{label}</span>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`relative w-10 h-5 transition-colors ${checked ? "bg-zinc-900" : "bg-zinc-200"}`}
+    <button
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-3 text-left w-full"
+    >
+      <span
+        className={`w-5 h-5 border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+          checked ? "border-zinc-900 bg-zinc-900" : "border-zinc-300 bg-white"
+        }`}
       >
-        <span
-          className={`absolute top-0.5 w-4 h-4 transition-transform ${
-            checked ? "translate-x-5 bg-white" : "translate-x-0.5 bg-white"
-          }`}
-        />
-      </button>
-    </div>
+        {checked && (
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 3.5L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+      <span className="text-zinc-600 text-sm">{label}</span>
+    </button>
   );
 }
