@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans } from "next/font/google";
+import { Oswald } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const oswald = Oswald({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-oswald",
   display: "swap",
 });
 
@@ -23,8 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={dmSans.variable}>
-      <body className="bg-white text-zinc-900 min-h-screen">{children}</body>
+    <html lang="en" className={oswald.variable}>
+      <body className="font-sans bg-white text-zinc-900 min-h-screen">{children}</body>
     </html>
   );
 }

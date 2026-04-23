@@ -51,7 +51,6 @@ export default function MatchBoard() {
   const p2Sets = completedSets.filter((s) => s.winner === 1).length;
   const isInTiebreak = isTiebreak || isSuperTiebreak;
 
-  // During a tiebreak: 1 serve, then alternate every 2 (1, 2, 2, 2, ...)
   function getCurrentServer(): Player {
     if (!isInTiebreak) return server;
     const pts = sets[currentSet]?.tiebreakPoints ?? [0, 0];
@@ -62,20 +61,21 @@ export default function MatchBoard() {
   const currentServer = getCurrentServer();
 
   return (
-    <main className="min-h-screen bg-white flex flex-col select-none overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-zinc-100">
+    <main className="min-h-screen bg-[#0a1628] flex flex-col select-none overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 shrink-0">
         <button
           onClick={() => router.push("/")}
-          className="text-zinc-400 text-xs tracking-widest uppercase hover:text-zinc-900 transition-colors"
+          className="text-slate-500 text-xs font-semibold tracking-widest uppercase active:text-white transition-colors"
         >
           ← Back
         </button>
-        <span className="text-zinc-300 text-xs tracking-widest uppercase">
+        <span className="text-emerald-400/60 text-xs font-semibold tracking-widest uppercase">
           {isInTiebreak ? (isSuperTiebreak ? "Super TB" : "Tiebreak") : ""}
         </span>
         <button
           onClick={undoPoint}
-          className="text-zinc-400 text-xs tracking-widest uppercase hover:text-zinc-900 transition-colors disabled:opacity-25"
+          className="text-slate-500 text-xs font-semibold tracking-widest uppercase active:text-white transition-colors disabled:opacity-20"
           disabled={state.history.length === 0}
         >
           Undo
@@ -102,8 +102,9 @@ export default function MatchBoard() {
             playerSide={0}
             onScore={() => addPoint(0)}
             isServing={currentServer === 0}
+            position="top"
           />
-          <div className="h-px landscape:w-px bg-zinc-100 shrink-0" />
+          <div className="h-px landscape:h-auto landscape:w-px bg-white/[0.06] shrink-0" />
           <PlayerPanel
             name={config.player2Name}
             setsWon={p2Sets}
@@ -113,6 +114,7 @@ export default function MatchBoard() {
             playerSide={1}
             onScore={() => addPoint(1)}
             isServing={currentServer === 1}
+            position="bottom"
           />
         </div>
       )}
@@ -129,6 +131,7 @@ interface PlayerPanelProps {
   playerSide: Player;
   onScore: () => void;
   isServing: boolean;
+  position: "top" | "bottom";
 }
 
 function PlayerPanel({
@@ -140,51 +143,77 @@ function PlayerPanel({
   playerSide,
   onScore,
   isServing,
+  position,
 }: PlayerPanelProps) {
   const completedSets = allSets.filter((s) => s.winner !== null);
 
   return (
     <button
       onClick={onScore}
-      className="flex-1 flex flex-col justify-center px-8 landscape:px-14 py-6 bg-white cursor-pointer active:bg-zinc-50 transition-colors"
+      className={`flex-1 flex flex-col justify-center px-6 landscape:px-10 cursor-pointer transition-colors outline-none ${
+        position === "top"
+          ? "bg-[#0e1c34] active:bg-[#132446]"
+          : "bg-[#0b1729] active:bg-[#0f1f3d]"
+      }`}
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
-      {/* Name row */}
-      <div className="flex items-center gap-3 mb-3">
-        <span className={`text-xl leading-none ${isServing ? "visible" : "invisible"}`}>🎾</span>
-        <span className="text-2xl font-bold text-zinc-900 tracking-tight truncate max-w-[200px] landscape:max-w-xs">
+      {/* Name + serve indicator */}
+      <div className="flex items-center gap-2.5 mb-4">
+        <div
+          className={`w-3 h-3 rounded-full shrink-0 transition-all ${
+            isServing
+              ? "bg-[#4ade80] shadow-[0_0_10px_rgba(74,222,128,0.5)]"
+              : "bg-white/10"
+          }`}
+        />
+        <span className="text-white/90 font-bold text-xl tracking-wide truncate uppercase max-w-[200px] landscape:max-w-xs">
           {name}
         </span>
-        <span className="text-xl font-bold text-zinc-300 ml-auto">{setsWon}</span>
+        <span className="text-white/20 text-base font-bold ml-auto tabular-nums">
+          {setsWon}
+        </span>
       </div>
 
-      {/* Past set scores */}
-      {completedSets.length > 0 && (
-        <div className="flex gap-5 mb-3 pl-9">
-          {completedSets.map((set, i) => (
+      {/* Score cells row */}
+      <div className="flex items-center gap-2 pl-5">
+        {/* Completed set scores */}
+        {completedSets.map((set, i) => (
+          <div
+            key={i}
+            className="w-10 h-13 flex items-center justify-center rounded-md bg-white/[0.04]"
+          >
             <span
-              key={i}
-              className={`text-base font-bold ${set.winner === playerSide ? "text-zinc-900" : "text-zinc-300"}`}
+              className={`text-lg font-bold tabular-nums ${
+                set.winner === playerSide ? "text-white/80" : "text-white/25"
+              }`}
             >
               {set.games[playerSide]}
               {set.tiebreakPoints !== undefined && (
-                <sup className="text-xs text-zinc-400 ml-0.5">
+                <sup className="text-[10px] text-white/30 ml-px">
                   {set.tiebreakPoints[playerSide]}
                 </sup>
               )}
             </span>
-          ))}
+          </div>
+        ))}
+
+        {completedSets.length > 0 && (
+          <div className="w-px h-12 bg-white/[0.08] mx-1" />
+        )}
+
+        {/* Current game score */}
+        <div className="w-[5.5rem] h-[5.5rem] flex items-center justify-center rounded-lg bg-white/[0.07]">
+          <span className="text-[3.5rem] font-extrabold text-white tabular-nums leading-none">
+            {currentSetGames}
+          </span>
         </div>
-      )}
 
-      {/* Current games */}
-      <div className="text-[5.5rem] landscape:text-[6rem] font-bold text-zinc-900 leading-none mb-1 pl-9">
-        {currentSetGames}
-      </div>
-
-      {/* Current points */}
-      <div className="text-[8rem] landscape:text-[9rem] font-bold text-zinc-900 leading-none pl-9">
-        {pointLabel}
+        {/* Current point score */}
+        <div className="min-w-[5.5rem] h-[5.5rem] px-2 flex items-center justify-center rounded-lg bg-[#4ade80]/[0.1]">
+          <span className="text-[3.5rem] font-extrabold text-[#4ade80] tabular-nums leading-none">
+            {pointLabel}
+          </span>
+        </div>
       </div>
     </button>
   );
@@ -208,22 +237,27 @@ function WinnerScreen({
   const winnerName = winner === 0 ? config.player1Name : config.player2Name;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8 bg-white">
-      <h2 className="text-5xl font-bold text-zinc-900 text-center tracking-tight">{winnerName}</h2>
-      <p className="text-zinc-400 text-sm tracking-widest uppercase">wins the match</p>
-      <div className="text-4xl font-bold text-zinc-900 tracking-tight">
+    <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8">
+      <div className="text-[#4ade80]/70 text-xs font-bold tracking-[0.3em] uppercase">
+        Match Complete
+      </div>
+      <h2 className="text-4xl font-extrabold text-white text-center tracking-tight uppercase">
+        {winnerName}
+      </h2>
+      <p className="text-white/40 text-sm tracking-widest uppercase">wins the match</p>
+      <div className="text-3xl font-extrabold text-white tracking-tight tabular-nums">
         {winner === 0 ? p1Sets : p2Sets} – {winner === 0 ? p2Sets : p1Sets}
       </div>
-      <div className="flex gap-3 mt-6">
+      <div className="flex gap-3 mt-4">
         <button
           onClick={onRematch}
-          className="px-8 py-4 bg-zinc-900 text-white font-bold tracking-wide active:scale-95 transition-transform"
+          className="px-7 py-3.5 bg-[#4ade80] text-[#0a1628] font-bold tracking-wide rounded-lg active:scale-95 transition-transform uppercase text-sm"
         >
           Rematch
         </button>
         <button
           onClick={onNewMatch}
-          className="px-8 py-4 border border-zinc-200 text-zinc-700 font-bold tracking-wide active:scale-95 transition-transform"
+          className="px-7 py-3.5 border border-white/20 text-white/70 font-bold tracking-wide rounded-lg active:scale-95 transition-transform uppercase text-sm"
         >
           New Match
         </button>
