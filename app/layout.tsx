@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Victor_Mono } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const victorMono = Victor_Mono({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-victor-mono",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-dm-sans",
   display: "swap",
 });
 
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={victorMono.variable}>
+    <html lang="en" className={dmSans.variable}>
       <body className="bg-white text-zinc-900 min-h-screen">{children}</body>
     </html>
   );
