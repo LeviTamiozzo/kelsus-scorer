@@ -54,20 +54,20 @@ export default function SetupPage() {
   const p1Display = player1Name || "Player 1";
   const p2Display = player2Name || "Player 2";
 
-  const labelClass = "block text-zinc-400 text-xs tracking-widest uppercase mb-2";
+  const labelClass = "block text-slate-500 text-xs tracking-widest uppercase mb-2";
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center p-6">
+    <main className="min-h-screen bg-[#0a1628] flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <h1 className="text-4xl font-bold text-zinc-900 tracking-tight mb-1">Scorer</h1>
-        <p className="text-zinc-400 text-xs tracking-widest uppercase mb-10">Tennis &amp; Padel</p>
+        <h1 className="text-4xl font-bold text-white tracking-tight mb-1">Scorer</h1>
+        <p className="text-white/30 text-xs tracking-widest uppercase mb-10">Tennis &amp; Padel</p>
 
         {/* Players */}
         <div className="mb-8 space-y-6">
           <div>
             <label className={labelClass}>Player 1</label>
             <input
-              className="bg-transparent border-b border-zinc-200 text-zinc-900 text-2xl font-bold w-full pb-2 focus:outline-none focus:border-zinc-900 transition-colors placeholder-zinc-300"
+              className="bg-transparent border-b border-white/10 text-white text-2xl font-bold w-full pb-2 focus:outline-none focus:border-[#4ade80] transition-colors placeholder-white/20"
               value={player1Name}
               onChange={(e) => setPlayer1Name(e.target.value)}
               placeholder="Player 1"
@@ -76,7 +76,7 @@ export default function SetupPage() {
           <div>
             <label className={labelClass}>Player 2</label>
             <input
-              className="bg-transparent border-b border-zinc-200 text-zinc-900 text-2xl font-bold w-full pb-2 focus:outline-none focus:border-zinc-900 transition-colors placeholder-zinc-300"
+              className="bg-transparent border-b border-white/10 text-white text-2xl font-bold w-full pb-2 focus:outline-none focus:border-[#4ade80] transition-colors placeholder-white/20"
               value={player2Name}
               onChange={(e) => setPlayer2Name(e.target.value)}
               placeholder="Player 2"
@@ -92,10 +92,10 @@ export default function SetupPage() {
               <button
                 key={p}
                 onClick={() => setFirstServer(p)}
-                className={`py-3 text-sm font-bold tracking-wide transition-colors ${
+                className={`py-3 text-sm font-bold tracking-wide rounded-lg transition-colors ${
                   firstServer === p
-                    ? "bg-zinc-900 text-white"
-                    : "border border-zinc-200 text-zinc-400 hover:border-zinc-400"
+                    ? "bg-[#4ade80] text-[#0a1628]"
+                    : "border border-white/10 text-white/40 active:border-white/25"
                 }`}
               >
                 {p === 0 ? p1Display : p2Display}
@@ -112,12 +112,12 @@ export default function SetupPage() {
               <button
                 key={key}
                 onClick={() => applyPreset(key)}
-                className={`py-3 text-sm font-bold tracking-wide transition-colors ${
+                className={`py-3 text-sm font-bold tracking-wide rounded-lg transition-colors ${
                   key === "custom" ? "col-span-2" : ""
                 } ${
                   preset === key
-                    ? "bg-zinc-900 text-white"
-                    : "border border-zinc-200 text-zinc-400 hover:border-zinc-400"
+                    ? "bg-[#4ade80] text-[#0a1628]"
+                    : "border border-white/10 text-white/40 active:border-white/25"
                 }`}
               >
                 {PRESETS[key].label}
@@ -128,12 +128,12 @@ export default function SetupPage() {
 
         {/* Custom settings */}
         {preset === "custom" && (
-          <div className="border border-zinc-200 p-5 mb-8 space-y-5">
+          <div className="border border-white/10 rounded-lg p-5 mb-8 space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Sets</label>
                 <select
-                  className="bg-white border-b border-zinc-200 text-zinc-900 text-base w-full pb-2 focus:outline-none"
+                  className="bg-[#0e1c34] border-b border-white/10 text-white text-base w-full pb-2 focus:outline-none rounded-none"
                   value={config.totalSets}
                   onChange={(e) => setConfig((c) => ({ ...c, totalSets: Number(e.target.value) as 1 | 3 | 5 }))}
                 >
@@ -145,7 +145,7 @@ export default function SetupPage() {
               <div>
                 <label className={labelClass}>Games / Set</label>
                 <select
-                  className="bg-white border-b border-zinc-200 text-zinc-900 text-base w-full pb-2 focus:outline-none"
+                  className="bg-[#0e1c34] border-b border-white/10 text-white text-base w-full pb-2 focus:outline-none rounded-none"
                   value={config.gamesPerSet}
                   onChange={(e) => setConfig((c) => ({ ...c, gamesPerSet: Number(e.target.value) }))}
                 >
@@ -177,7 +177,7 @@ export default function SetupPage() {
 
         <button
           onClick={handleStart}
-          className="w-full py-5 bg-zinc-900 text-white font-bold text-xl tracking-wide active:scale-95 transition-transform"
+          className="w-full py-5 bg-[#4ade80] text-[#0a1628] font-bold text-xl tracking-wide rounded-lg active:scale-95 transition-transform"
         >
           Start Match
         </button>
@@ -193,17 +193,17 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
       className="flex items-center gap-3 text-left w-full"
     >
       <span
-        className={`w-5 h-5 border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-          checked ? "border-zinc-900 bg-zinc-900" : "border-zinc-300 bg-white"
+        className={`w-5 h-5 border-2 flex-shrink-0 rounded flex items-center justify-center transition-colors ${
+          checked ? "border-[#4ade80] bg-[#4ade80]" : "border-white/20 bg-transparent"
         }`}
       >
         {checked && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 3.5L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M1 3.5L3.5 6.5L9 1" stroke="#0a1628" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </span>
-      <span className="text-zinc-600 text-sm">{label}</span>
+      <span className="text-white/50 text-sm">{label}</span>
     </button>
   );
 }

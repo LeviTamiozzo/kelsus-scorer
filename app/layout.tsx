@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={oswald.variable}>
-      <body className="font-sans bg-white text-zinc-900 min-h-screen">{children}</body>
+      <body className="font-sans bg-[#0a1628] text-white min-h-screen">{children}</body>
     </html>
   );
 }

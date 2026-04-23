@@ -6,8 +6,8 @@
 
 html, body {
   height: 100%;
-  background-color: #ffffff;
-  color: #18181b;
+  background-color: #0a1628;
+  color: #ffffff;
   font-family: var(--font-oswald), ui-sans-serif, system-ui, sans-serif;
 }
 
