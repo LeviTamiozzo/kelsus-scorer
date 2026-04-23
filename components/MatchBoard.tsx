@@ -31,6 +31,18 @@ export default function MatchBoard() {
   const { state, addPoint, undoPoint, setGameScore, winGame, setCurrentSetGames } = useMatchState(config);
   const { sets, currentSet, currentGame, isTiebreak, isSuperTiebreak, winner, server } = state;
 
+  const completedSets = sets.filter((s) => s.winner !== null);
+  const p1Sets = completedSets.filter((s) => s.winner === 0).length;
+  const p2Sets = completedSets.filter((s) => s.winner === 1).length;
+  const isInTiebreak = isTiebreak || isSuperTiebreak;
+
+  const currentServer: Player = (() => {
+    if (!isInTiebreak) return server;
+    const pts = sets[currentSet]?.tiebreakPoints ?? [0, 0];
+    const total = pts[0] + pts[1];
+    return Math.floor((total + 1) / 2) % 2 === 0 ? server : (server === 0 ? 1 : 0);
+  })();
+
   const { isListening, isSupported, feedback, toggleListening } = useVoiceCommands({
     config,
     onWinGame: winGame,
@@ -38,6 +50,7 @@ export default function MatchBoard() {
     onSetGameScore: setGameScore,
     onSetCurrentSet: setCurrentSetGames,
     active: winner === null,
+    currentServer,
   });
 
   function getPointLabel(playerIdx: Player): string {
@@ -55,20 +68,6 @@ export default function MatchBoard() {
   function getSetGames(setIdx: number, playerIdx: Player): number {
     return sets[setIdx]?.games[playerIdx] ?? 0;
   }
-
-  const completedSets = sets.filter((s) => s.winner !== null);
-  const p1Sets = completedSets.filter((s) => s.winner === 0).length;
-  const p2Sets = completedSets.filter((s) => s.winner === 1).length;
-  const isInTiebreak = isTiebreak || isSuperTiebreak;
-
-  function getCurrentServer(): Player {
-    if (!isInTiebreak) return server;
-    const pts = sets[currentSet]?.tiebreakPoints ?? [0, 0];
-    const total = pts[0] + pts[1];
-    return Math.floor((total + 1) / 2) % 2 === 0 ? server : (server === 0 ? 1 : 0);
-  }
-
-  const currentServer = getCurrentServer();
 
   return (
     <main className="min-h-screen bg-[#0a1628] flex flex-col select-none overflow-hidden">

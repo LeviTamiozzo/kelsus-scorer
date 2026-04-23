@@ -21,6 +21,40 @@ Made by the best team of developers in Kelsus:
 | Padel | 3 | 6 | yes | yes | yes |
 | Custom | 1/3/5 | 4–8 | toggle | toggle | toggle |
 
+## Voice Commands
+
+All commands are in Spanish. Tap the **Mic** button before speaking.
+
+### Game score — prefix `game`
+
+| Command | Effect |
+|---------|--------|
+| `game cero quince` | Set score to 0 – 15 |
+| `game quince treinta` | Set score to 15 – 30 |
+| `game treinta cuarenta` | Set score to 30 – 40 |
+| `game cuarenta cero` | Set score to 40 – 0 |
+| `game deuce` / `game iguales` | Set score to deuce |
+| `game ventaja [nombre]` | Set advantage for a player |
+| `game [nombre]` / `game jugador 1` | Player wins the current game |
+
+Scores are **server-relative**: the first number is the server's score, the second is the receiver's. If player 2 is serving and you say `game cuarenta cero`, player 2 gets 40 and player 1 gets 0.
+
+Accepted point words: `cero`, `amor`, `quince`, `treinta`, `cuarenta` (also the numeric equivalents `0`, `15`, `30`, `40`).
+
+### Current set score — prefix `set`
+
+| Command | Effect |
+|---------|--------|
+| `set seis uno` | Set current set to 6 – 1 |
+| `set tres cuatro` | Set current set to 3 – 4 |
+| `set 6 1` | Same, using digits |
+
+### Undo
+
+| Command | Effect |
+|---------|--------|
+| `deshacer` / `undo` | Undo the last point |
+
 ## Running locally
 
 ```bash
