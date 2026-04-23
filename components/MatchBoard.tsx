@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import type { MatchConfig, Player } from "@/types";
 import { useMatchState } from "@/hooks/useMatchState";
+import { useVoiceCommands } from "@/hooks/useVoiceCommands";
 import { POINT_LABELS } from "@/types";
 
 export default function MatchBoard() {
@@ -27,8 +28,17 @@ export default function MatchBoard() {
     }
   }, [searchParams]);
 
-  const { state, addPoint, undoPoint } = useMatchState(config);
+  const { state, addPoint, undoPoint, setGameScore, winGame, setCurrentSetGames } = useMatchState(config);
   const { sets, currentSet, currentGame, isTiebreak, isSuperTiebreak, winner, server } = state;
+
+  const { isListening, isSupported, feedback, toggleListening } = useVoiceCommands({
+    config,
+    onWinGame: winGame,
+    onUndo: undoPoint,
+    onSetGameScore: setGameScore,
+    onSetCurrentSet: setCurrentSetGames,
+    active: winner === null,
+  });
 
   function getPointLabel(playerIdx: Player): string {
     if (isTiebreak || isSuperTiebreak) {
@@ -51,7 +61,6 @@ export default function MatchBoard() {
   const p2Sets = completedSets.filter((s) => s.winner === 1).length;
   const isInTiebreak = isTiebreak || isSuperTiebreak;
 
-  // During a tiebreak: 1 serve, then alternate every 2 (1, 2, 2, 2, ...)
   function getCurrentServer(): Player {
     if (!isInTiebreak) return server;
     const pts = sets[currentSet]?.tiebreakPoints ?? [0, 0];
@@ -63,6 +72,7 @@ export default function MatchBoard() {
 
   return (
     <main className="min-h-screen bg-white flex flex-col select-none overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-zinc-100">
         <button
           onClick={() => router.push("/")}
@@ -70,16 +80,32 @@ export default function MatchBoard() {
         >
           ← Back
         </button>
+
         <span className="text-zinc-300 text-xs tracking-widest uppercase">
           {isInTiebreak ? (isSuperTiebreak ? "Super TB" : "Tiebreak") : ""}
         </span>
-        <button
-          onClick={undoPoint}
-          className="text-zinc-400 text-xs tracking-widest uppercase hover:text-zinc-900 transition-colors disabled:opacity-25"
-          disabled={state.history.length === 0}
-        >
-          Undo
-        </button>
+
+        <div className="flex items-center gap-4">
+          {isSupported && (
+            <button
+              onClick={toggleListening}
+              className={`text-xs tracking-widest uppercase transition-colors ${
+                isListening
+                  ? "text-red-400 animate-pulse"
+                  : "text-zinc-400 hover:text-zinc-900"
+              }`}
+            >
+              {isListening ? "● Mic" : "Mic"}
+            </button>
+          )}
+          <button
+            onClick={undoPoint}
+            className="text-zinc-400 text-xs tracking-widest uppercase hover:text-zinc-900 transition-colors disabled:opacity-25"
+            disabled={state.history.length === 0}
+          >
+            Undo
+          </button>
+        </div>
       </div>
 
       {winner !== null ? (
@@ -116,6 +142,15 @@ export default function MatchBoard() {
           />
         </div>
       )}
+
+      {/* Voice feedback toast */}
+      {feedback && (
+        <div className="fixed bottom-8 inset-x-0 flex justify-center pointer-events-none z-50">
+          <div className="bg-zinc-900 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg">
+            {feedback}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -149,7 +184,6 @@ function PlayerPanel({
       className="flex-1 flex flex-col justify-center px-8 landscape:px-14 py-6 bg-white cursor-pointer active:bg-zinc-50 transition-colors"
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
-      {/* Name row */}
       <div className="flex items-center gap-3 mb-3">
         <span className={`text-xl leading-none ${isServing ? "visible" : "invisible"}`}>🎾</span>
         <span className="text-2xl font-bold text-zinc-900 tracking-tight truncate max-w-[200px] landscape:max-w-xs">
@@ -158,7 +192,6 @@ function PlayerPanel({
         <span className="text-xl font-bold text-zinc-300 ml-auto">{setsWon}</span>
       </div>
 
-      {/* Past set scores */}
       {completedSets.length > 0 && (
         <div className="flex gap-5 mb-3 pl-9">
           {completedSets.map((set, i) => (
@@ -177,12 +210,10 @@ function PlayerPanel({
         </div>
       )}
 
-      {/* Current games */}
       <div className="text-[5.5rem] landscape:text-[6rem] font-bold text-zinc-900 leading-none mb-1 pl-9">
         {currentSetGames}
       </div>
 
-      {/* Current points */}
       <div className="text-[8rem] landscape:text-[9rem] font-bold text-zinc-900 leading-none pl-9">
         {pointLabel}
       </div>

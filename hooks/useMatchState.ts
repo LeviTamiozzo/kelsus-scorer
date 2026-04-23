@@ -157,6 +157,16 @@ function applyRegularPoint(state: MatchState, scorer: Player): MatchState {
   return { ...state, currentGame: game };
 }
 
+function determineSetWinner(p1: number, p2: number, gamesPerSet: number): Player | null {
+  const margin = Math.abs(p1 - p2);
+  if (p1 >= gamesPerSet && margin >= 2) return 0;
+  if (p2 >= gamesPerSet && margin >= 2) return 1;
+  // Tiebreak set (7-6 or 6-7)
+  if (p1 === gamesPerSet + 1 && p2 === gamesPerSet) return 0;
+  if (p2 === gamesPerSet + 1 && p1 === gamesPerSet) return 1;
+  return null;
+}
+
 export function useMatchState(config: MatchConfig) {
   const [state, setState] = useState<MatchState>(() => createInitialMatchState(config));
 
@@ -190,5 +200,61 @@ export function useMatchState(config: MatchConfig) {
     });
   }, []);
 
-  return { state, addPoint, undoPoint };
+  const winGame = useCallback((winner: Player) => {
+    setState((prev) => {
+      if (prev.winner !== null) return prev;
+      const snapshot = snapshotState(prev);
+      const next = applyGameWin(prev, winner);
+      return { ...next, history: [...prev.history, snapshot] };
+    });
+  }, []);
+
+  const setCurrentSetGames = useCallback((p1Games: number, p2Games: number) => {
+    setState((prev) => {
+      if (prev.winner !== null) return prev;
+      const snapshot = snapshotState(prev);
+      const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
+      sets[prev.currentSet] = {
+        ...sets[prev.currentSet],
+        games: [p1Games, p2Games],
+        winner: determineSetWinner(p1Games, p2Games, prev.config.gamesPerSet),
+      };
+      return { ...prev, sets, history: [...prev.history, snapshot] };
+    });
+  }, []);
+
+  const setGameScore = useCallback((
+    p1Points: number,
+    p2Points: number,
+    opts?: { deuce?: boolean; advantage?: Player | null }
+  ) => {
+    setState((prev) => {
+      if (prev.winner !== null) return prev;
+      const snapshot = snapshotState(prev);
+      const deuce = opts?.deuce ?? (p1Points === 3 && p2Points === 3);
+      const advantage = opts?.advantage !== undefined ? opts.advantage : null;
+      const newGame: GameState = {
+        points: deuce ? [3, 3] : [p1Points, p2Points],
+        deuce,
+        advantage: deuce ? advantage : null,
+      };
+      return { ...prev, currentGame: newGame, history: [...prev.history, snapshot] };
+    });
+  }, []);
+
+  const setSetGames = useCallback((setIdx: number, p1Games: number, p2Games: number) => {
+    setState((prev) => {
+      if (setIdx >= prev.sets.length) return prev;
+      const snapshot = snapshotState(prev);
+      const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
+      sets[setIdx] = {
+        ...sets[setIdx],
+        games: [p1Games, p2Games],
+        winner: determineSetWinner(p1Games, p2Games, prev.config.gamesPerSet),
+      };
+      return { ...prev, sets, history: [...prev.history, snapshot] };
+    });
+  }, []);
+
+  return { state, addPoint, undoPoint, setGameScore, setSetGames, winGame, setCurrentSetGames };
 }
