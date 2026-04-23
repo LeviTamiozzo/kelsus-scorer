@@ -262,10 +262,26 @@ export function useMatchState(config: MatchConfig) {
       if (!prev.isTiebreak && !prev.isSuperTiebreak) return prev;
       const snapshot = snapshotState(prev);
       const sets = JSON.parse(JSON.stringify(prev.sets)) as SetScore[];
-      sets[prev.currentSet] = {
-        ...sets[prev.currentSet],
-        tiebreakPoints: [p1Points, p2Points],
-      };
+      const currentSetData = sets[prev.currentSet];
+      currentSetData.tiebreakPoints = [p1Points, p2Points];
+
+      const target = prev.isSuperTiebreak ? 10 : 7;
+      const leader: Player = p1Points >= p2Points ? 0 : 1;
+      const high = Math.max(p1Points, p2Points);
+      const low = Math.min(p1Points, p2Points);
+      const won = high >= target && high - low >= 2;
+
+      if (won) {
+        currentSetData.winner = leader;
+        const newServer: Player = prev.server === 0 ? 1 : 0;
+        const next = advanceSet(
+          { ...prev, sets, isTiebreak: false, isSuperTiebreak: false, currentGame: initialGame(), server: newServer },
+          leader,
+          sets,
+        );
+        return { ...next, history: [...prev.history, snapshot] };
+      }
+
       return { ...prev, sets, history: [...prev.history, snapshot] };
     });
   }, []);
