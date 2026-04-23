@@ -55,22 +55,20 @@ export default function SetupPage() {
   const p1Display = player1Name || "Player 1";
   const p2Display = player2Name || "Player 2";
 
-  const inputClass =
-    "bg-transparent border-b border-neutral-800 text-white text-2xl font-bold w-full pb-2 focus:outline-none focus:border-white transition-colors placeholder-neutral-700";
-  const labelClass = "block text-neutral-600 text-xs tracking-widest uppercase mb-2";
+  const labelClass = "block text-zinc-400 text-xs tracking-widest uppercase mb-2";
 
   return (
-    <main className="min-h-screen bg-black flex items-center justify-center p-6">
+    <main className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <h1 className="text-4xl font-black text-white tracking-tight mb-1">Scorer</h1>
-        <p className="text-neutral-600 text-xs tracking-widest uppercase mb-10">Tennis &amp; Padel</p>
+        <h1 className="text-4xl font-bold text-zinc-900 tracking-tight mb-1">Scorer</h1>
+        <p className="text-zinc-400 text-xs tracking-widest uppercase mb-10">Tennis &amp; Padel</p>
 
         {/* Players */}
         <div className="mb-8 space-y-6">
           <div>
             <label className={labelClass}>Player 1</label>
             <input
-              className={inputClass}
+              className="bg-transparent border-b border-zinc-200 text-zinc-900 text-2xl font-bold w-full pb-2 focus:outline-none focus:border-zinc-900 transition-colors placeholder-zinc-300"
               value={player1Name}
               onChange={(e) => setPlayer1Name(e.target.value)}
               placeholder="Player 1"
@@ -79,7 +77,7 @@ export default function SetupPage() {
           <div>
             <label className={labelClass}>Player 2</label>
             <input
-              className={inputClass}
+              className="bg-transparent border-b border-zinc-200 text-zinc-900 text-2xl font-bold w-full pb-2 focus:outline-none focus:border-zinc-900 transition-colors placeholder-zinc-300"
               value={player2Name}
               onChange={(e) => setPlayer2Name(e.target.value)}
               placeholder="Player 2"
@@ -97,8 +95,8 @@ export default function SetupPage() {
                 onClick={() => setFirstServer(p)}
                 className={`py-3 text-sm font-bold tracking-wide transition-colors ${
                   firstServer === p
-                    ? "bg-white text-black"
-                    : "border border-neutral-800 text-neutral-500 hover:border-neutral-600"
+                    ? "bg-zinc-900 text-white"
+                    : "border border-zinc-200 text-zinc-400 hover:border-zinc-400"
                 }`}
               >
                 {p === 0 ? p1Display : p2Display}
@@ -117,8 +115,8 @@ export default function SetupPage() {
                 onClick={() => applyPreset(key)}
                 className={`py-3 text-sm font-bold tracking-wide transition-colors ${
                   preset === key
-                    ? "bg-white text-black"
-                    : "border border-neutral-800 text-neutral-500 hover:border-neutral-600"
+                    ? "bg-zinc-900 text-white"
+                    : "border border-zinc-200 text-zinc-400 hover:border-zinc-400"
                 }`}
               >
                 {PRESETS[key].label}
@@ -129,12 +127,12 @@ export default function SetupPage() {
 
         {/* Custom settings */}
         {preset === "custom" && (
-          <div className="border border-neutral-800 p-5 mb-8 space-y-5">
+          <div className="border border-zinc-200 p-5 mb-8 space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Sets</label>
                 <select
-                  className="bg-black border-b border-neutral-700 text-white text-base w-full pb-2 focus:outline-none"
+                  className="bg-white border-b border-zinc-200 text-zinc-900 text-base w-full pb-2 focus:outline-none"
                   value={config.totalSets}
                   onChange={(e) => setConfig((c) => ({ ...c, totalSets: Number(e.target.value) as 1 | 3 | 5 }))}
                 >
@@ -146,7 +144,7 @@ export default function SetupPage() {
               <div>
                 <label className={labelClass}>Games / Set</label>
                 <select
-                  className="bg-black border-b border-neutral-700 text-white text-base w-full pb-2 focus:outline-none"
+                  className="bg-white border-b border-zinc-200 text-zinc-900 text-base w-full pb-2 focus:outline-none"
                   value={config.gamesPerSet}
                   onChange={(e) => setConfig((c) => ({ ...c, gamesPerSet: Number(e.target.value) }))}
                 >
@@ -178,7 +176,7 @@ export default function SetupPage() {
 
         <button
           onClick={handleStart}
-          className="w-full py-5 bg-white text-black font-black text-xl tracking-wide active:scale-95 transition-transform"
+          className="w-full py-5 bg-zinc-900 text-white font-bold text-xl tracking-wide active:scale-95 transition-transform"
         >
           Start Match
         </button>
@@ -190,14 +188,14 @@ export default function SetupPage() {
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-neutral-400 text-sm">{label}</span>
+      <span className="text-zinc-500 text-sm">{label}</span>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative w-10 h-5 transition-colors ${checked ? "bg-white" : "bg-neutral-800"}`}
+        className={`relative w-10 h-5 transition-colors ${checked ? "bg-zinc-900" : "bg-zinc-200"}`}
       >
         <span
           className={`absolute top-0.5 w-4 h-4 transition-transform ${
-            checked ? "translate-x-5 bg-black" : "translate-x-0.5 bg-neutral-600"
+            checked ? "translate-x-5 bg-white" : "translate-x-0.5 bg-white"
           }`}
         />
       </button>
